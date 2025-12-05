@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="EduTech.Form/EduTechPlus.csproj" />
+  <Project Path="EduTechPlus/EduTechPlus.Api.csproj" />
+</Solution>
