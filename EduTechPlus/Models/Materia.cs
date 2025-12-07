@@ -3,9 +3,10 @@
     public class Materia
     {
         public int Id { get; set; }
-        public string Nombre { get; set; } = null!; // "Química", "Matemática"
 
-        public ICollection<ProfesorGrupoMateria> ProfesoresPorGrupo { get; set; } = new List<ProfesorGrupoMateria>();
-        public ICollection<Tema> Temas { get; set; } = new List<Tema>();
+        public string Nombre { get; set; } = string.Empty;
+
+       
+       
     }
 }

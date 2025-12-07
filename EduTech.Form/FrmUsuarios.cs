@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows.Forms;
+using EduTechPlus.Api.Dtos;
 using EduTechPlus.Api.Models;
-using Newtonsoft.Json;
 
 namespace EduTechPlus
 {
@@ -16,18 +17,73 @@ namespace EduTechPlus
         {
             InitializeComponent();
 
-            // Configurar HttpClient
             cliente.BaseAddress = new Uri("http://localhost:5215/api/");
+            cliente.DefaultRequestHeaders.Accept.Clear();
             cliente.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json")
-            );
+                new MediaTypeWithQualityHeaderValue("application/json"));
+
             dgvUsuarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsuarios.ReadOnly = true;
             dgvUsuarios.MultiSelect = false;
-            dgvUsuarios.AutoGenerateColumns = true;
-            dgvUsuarios.CellDoubleClick += DgvUsuarios_CellDoubleClick;
+            dgvUsuarios.AutoGenerateColumns = false;
+
+            ConfigurarColumnas();
             btnActualizar.Click += BtnActualizar_Click;
+
             CargarUsuariosAsync();
+        }
+
+        private void ConfigurarColumnas()
+        {
+            dgvUsuarios.Columns.Clear();
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Id",
+                HeaderText = "ID",
+                DataPropertyName = "Id",
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Nombre",
+                HeaderText = "Nombre",
+                DataPropertyName = "Nombre",
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Rol",
+                HeaderText = "Rol",
+                DataPropertyName = "Rol", // Alumno / Profesor
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Colegio",
+                HeaderText = "Colegio",
+                DataPropertyName = "Colegio",
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Turno",
+                HeaderText = "Turno",
+                DataPropertyName = "Turno",
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                Name = "Grupo",
+                HeaderText = "Grupo",
+                DataPropertyName = "Grupo",
+                ReadOnly = true
+            });
         }
 
         private async void CargarUsuariosAsync()
@@ -36,32 +92,40 @@ namespace EduTechPlus
 
             try
             {
-                dgvUsuarios.DataSource = null; 
+                dgvUsuarios.DataSource = null;
+
                 var response = await cliente.GetAsync("Usuarios");
 
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
-                    var usuarios = JsonConvert.DeserializeObject<List<Usuario>>(json);
+                    var usuariosApi = JsonConvert.DeserializeObject<List<dynamic>>(json);
 
-                    if (usuarios != null && usuarios.Count > 0)
+                    var lista = new List<UsuarioListadoDto>();
+
+                    foreach (var u in usuariosApi)
                     {
-                        dgvUsuarios.DataSource = usuarios;
+                        lista.Add(new UsuarioListadoDto
+                        {
+                            Id = u.id,
+                            Nombre = u.nombre,
+                            Rol = (u.rol == 1) ? "Alumno" : "Profesor",
+                            Colegio = u.colegio ?? "",
+                            Turno = u.turno ?? "",
+                            Grupo = u.grupo ?? ""
+                        });
                     }
-                    else
-                    {
-                        dgvUsuarios.DataSource = null;
-                        MessageBox.Show("No hay usuarios para mostrar.", "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
+
+                    dgvUsuarios.DataSource = lista;
                 }
                 else
                 {
-                    MessageBox.Show($"No se pudieron cargar los usuarios. Código: {response.StatusCode}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("No se pudieron cargar los usuarios");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al conectar con la API: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error: " + ex.Message);
             }
             finally
             {
@@ -72,22 +136,6 @@ namespace EduTechPlus
         private void BtnActualizar_Click(object sender, EventArgs e)
         {
             CargarUsuariosAsync();
-        }
-
-        private void DgvUsuarios_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                var fila = dgvUsuarios.Rows[e.RowIndex].DataBoundItem as Usuario;
-                if (fila != null)
-                {
-                    string tipoDetalle = fila.ProfesorDetalle != null ? "Profesor" :
-                                         fila.AlumnoDetalle != null ? "Alumno" : "Desconocido";
-
-                    string info = $"ID: {fila.Id}\nNombre: {fila.Nombre}\nCorreo: {fila.Correo}\nRol: {fila.Rol}\nTipo: {tipoDetalle}";
-                    MessageBox.Show(info, "Detalles del Usuario", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
         }
     }
 }

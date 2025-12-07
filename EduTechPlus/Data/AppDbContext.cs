@@ -10,59 +10,36 @@ namespace EduTechPlus.Api.Data
         {
         }
 
-        public DbSet<Usuario> Usuarios { get; set; } = null!;
-        public DbSet<Colegio> Colegios { get; set; } = null!;
-        public DbSet<Grupo> Grupos { get; set; } = null!;
-        public DbSet<Materia> Materias { get; set; } = null!;
-        public DbSet<ProfesorDetalle> ProfesorDetalles { get; set; } = null!;
-        public DbSet<AlumnoDetalle> AlumnoDetalles { get; set; } = null!;
-        public DbSet<ProfesorGrupoMateria> ProfesorGrupoMaterias { get; set; } = null!;
-        public DbSet<Tema> Temas { get; set; } = null!;
-        public DbSet<Leccion> Lecciones { get; set; } = null!;
-        public DbSet<Pregunta> Preguntas { get; set; } = null!;
-        public DbSet<Quiz> Quizzes { get; set; } = null!;
-        public DbSet<QuizPregunta> QuizPreguntas { get; set; } = null!;
-        public DbSet<ResultadoQuiz> ResultadosQuiz { get; set; } = null!;
+        // Tabla principal
+        public DbSet<Usuario> Usuarios { get; set; }
+
+        // Si ya tienes modelos para esto, déjalos:
+        public DbSet<Colegio> Colegios { get; set; }
+        public DbSet<Grupo> Grupos { get; set; }
+        public DbSet<Materia> Materias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Enums como string
+            // Índice único por correo
             modelBuilder.Entity<Usuario>()
-                .Property(u => u.Rol)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<Grupo>()
-                .Property(g => g.Turno)
-                .HasConversion<string>();
-
-            modelBuilder.Entity<ProfesorDetalle>()
-                .Property(p => p.Turno)
-                .HasConversion<string>();
-
-            // Clave primaria compuesta para detalles
-            modelBuilder.Entity<ProfesorDetalle>()
-                .HasKey(p => p.UsuarioId);
-
-            modelBuilder.Entity<AlumnoDetalle>()
-                .HasKey(a => a.UsuarioId);
-
-            // Relaciones Usuario–Detalles
-            modelBuilder.Entity<Usuario>()
-                .HasOne(u => u.ProfesorDetalle)
-                .WithOne(p => p.Usuario)
-                .HasForeignKey<ProfesorDetalle>(p => p.UsuarioId);
-
-            modelBuilder.Entity<Usuario>()
-                .HasOne(u => u.AlumnoDetalle)
-                .WithOne(a => a.Usuario)
-                .HasForeignKey<AlumnoDetalle>(a => a.UsuarioId);
-
-            // Grupo único por Nombre + Turno + Colegio
-            modelBuilder.Entity<Grupo>()
-                .HasIndex(g => new { g.Nombre, g.Turno, g.ColegioId })
+                .HasIndex(u => u.Correo)
                 .IsUnique();
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Nombre)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Correo)
+                .IsRequired()
+                .HasMaxLength(150);
+
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.ContrasenaHash)
+                .IsRequired();
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using EduTechPlus.Api.Data;
-using EduTechPlus.Api.Dtos;
+﻿using EduTechPlus.Api.Data;
 using EduTechPlus.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,82 +16,33 @@ namespace EduTechPlus.Api.Controllers
             _context = context;
         }
 
-        [HttpPost("register-profesor")]
-        public async Task<IActionResult> RegisterProfesor([FromBody] RegisterProfesorDto dto)
+        // ======================================================
+        //  REGISTRO
+        // ======================================================
+        [HttpPost("registro")]
+        public async Task<IActionResult> Registro([FromBody] RegistroRequest dto)
         {
-            if (await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo))
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // 1. Verificar si el correo ya existe
+            bool existe = await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo);
+            if (existe)
                 return BadRequest("El correo ya está registrado.");
 
             var usuario = new Usuario
             {
                 Nombre = dto.Nombre,
                 Correo = dto.Correo,
-                ContrasenaHash = HashPassword(dto.Contrasena),
-                Rol = RolUsuario.Profesor
+                ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(dto.Contrasena),
+                             
+                Colegio = dto.Colegio,
+                Turno = dto.Turno,
+                Grupo = dto.Grupo,
+                MateriasTexto = dto.MateriasTexto
             };
 
-            var detalle = new ProfesorDetalle
-            {
-                Usuario = usuario,
-                ColegioId = dto.ColegioId,
-                Turno = dto.Turno
-            };
-
-            _context.ProfesorDetalles.Add(detalle);
-            await _context.SaveChangesAsync();
-
-            // asignar materias a grupos
-            var asignaciones = new List<ProfesorGrupoMateria>();
-            foreach (var grupoId in dto.GruposIds)
-            {
-                foreach (var materiaId in dto.MateriasIds)
-                {
-                    asignaciones.Add(new ProfesorGrupoMateria
-                    {
-                        ProfesorId = usuario.Id,
-                        GrupoId = grupoId,
-                        MateriaId = materiaId
-                    });
-                }
-            }
-            _context.ProfesorGrupoMaterias.AddRange(asignaciones);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { usuario.Id, usuario.Nombre, usuario.Correo, Rol = usuario.Rol.ToString() });
-        }
-
-        [HttpPost("register-alumno")]
-        public async Task<IActionResult> RegisterAlumno([FromBody] RegisterAlumnoDto dto)
-        {
-            if (await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo))
-                return BadRequest("El correo ya está registrado.");
-
-            var grupo = await _context.Grupos
-                .Include(g => g.Colegio)
-                .SingleOrDefaultAsync(g =>
-                    g.Nombre == dto.NombreGrupo &&
-                    g.Turno == dto.Turno &&
-                    g.ColegioId == dto.ColegioId);
-
-            if (grupo == null)
-                return BadRequest("No existe ese grupo para el colegio y turno seleccionados.");
-
-            var usuario = new Usuario
-            {
-                Nombre = dto.Nombre,
-                Correo = dto.Correo,
-                ContrasenaHash = HashPassword(dto.Contrasena),
-                Rol = RolUsuario.Alumno
-            };
-
-            var detalle = new AlumnoDetalle
-            {
-                Usuario = usuario,
-                ColegioId = dto.ColegioId,
-                GrupoId = grupo.Id
-            };
-
-            _context.AlumnoDetalles.Add(detalle);
+            _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
             return Ok(new
@@ -102,64 +50,58 @@ namespace EduTechPlus.Api.Controllers
                 usuario.Id,
                 usuario.Nombre,
                 usuario.Correo,
-                Rol = usuario.Rol.ToString(),
-                Grupo = new
-                {
-                    grupo.Id,
-                    grupo.Nombre,
-                    Turno = grupo.Turno.ToString(),
-                    Colegio = grupo.Colegio.Nombre
-                }
+                usuario.Rol
             });
         }
 
+        // ======================================================
+        //  LOGIN
+        // ======================================================
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginRequest dto)
         {
-            var usuario = await _context.Usuarios
-                .Include(u => u.AlumnoDetalle)
-                    .ThenInclude(a => a.Colegio)
-                .Include(u => u.AlumnoDetalle)
-                    .ThenInclude(a => a.Grupo)
-                .Include(u => u.ProfesorDetalle)
-                    .ThenInclude(p => p.Colegio)
-                .SingleOrDefaultAsync(u => u.Correo == dto.Correo);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            if (usuario == null || usuario.ContrasenaHash != HashPassword(dto.Contrasena))
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(u => u.Correo == dto.Correo);
+
+            if (usuario == null)
                 return Unauthorized("Correo o contraseña incorrectos.");
 
-            var response = new LoginResponseDto
-            {
-                UsuarioId = usuario.Id,
-                Nombre = usuario.Nombre,
-                Correo = usuario.Correo,
-                Rol = usuario.Rol.ToString()
-            };
+            bool ok = BCrypt.Net.BCrypt.Verify(dto.Contrasena, usuario.ContrasenaHash);
+            if (!ok)
+                return Unauthorized("Correo o contraseña incorrectos.");
 
-            if (usuario.Rol == RolUsuario.Alumno && usuario.AlumnoDetalle != null)
+            return Ok(new
             {
-                response.ColegioId = usuario.AlumnoDetalle.ColegioId;
-                response.ColegioNombre = usuario.AlumnoDetalle.Colegio.Nombre;
-                response.GrupoId = usuario.AlumnoDetalle.GrupoId;
-                response.GrupoNombre = usuario.AlumnoDetalle.Grupo.Nombre;
-                response.Turno = usuario.AlumnoDetalle.Grupo.Turno.ToString();
-            }
-            else if (usuario.Rol == RolUsuario.Profesor && usuario.ProfesorDetalle != null)
-            {
-                response.ColegioId = usuario.ProfesorDetalle.ColegioId;
-                response.ColegioNombre = usuario.ProfesorDetalle.Colegio.Nombre;
-                response.Turno = usuario.ProfesorDetalle.Turno.ToString();
-            }
-
-            return Ok(response);
+                usuario.Id,
+                usuario.Nombre,
+                usuario.Correo,
+                usuario.Rol
+            });
         }
 
-        private string HashPassword(string password)
+        // ======================================================
+        //  CLASES USADAS PARA RECIBIR EL JSON
+        // ======================================================
+
+        public class RegistroRequest
         {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
+            public string Nombre { get; set; } = string.Empty;
+            public string Correo { get; set; } = string.Empty;
+            public string Contrasena { get; set; } = string.Empty;
+            public int Rol { get; set; }
+            public string Colegio { get; set; } = string.Empty;
+            public string Turno { get; set; } = string.Empty;
+            public string Grupo { get; set; } = string.Empty;
+            public string MateriasTexto { get; set; } = string.Empty;
+        }
+
+        public class LoginRequest
+        {
+            public string Correo { get; set; } = string.Empty;
+            public string Contrasena { get; set; } = string.Empty;
         }
     }
 }

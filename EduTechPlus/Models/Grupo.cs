@@ -3,13 +3,17 @@
     public class Grupo
     {
         public int Id { get; set; }
-        public string Nombre { get; set; } = null!;  // "12 A"
-        public Turno Turno { get; set; }
+
+        public string Nombre { get; set; } = string.Empty;
+
+        public string Turno { get; set; } = string.Empty;
 
         public int ColegioId { get; set; }
-        public Colegio Colegio { get; set; } = null!;
+        public Colegio Colegio { get; set; }
 
-        public ICollection<ProfesorGrupoMateria> Profesores { get; set; } = new List<ProfesorGrupoMateria>();
+        // Relación con alumnos (si la tienes)
         public ICollection<AlumnoDetalle> Alumnos { get; set; } = new List<AlumnoDetalle>();
+
+        
     }
 }
