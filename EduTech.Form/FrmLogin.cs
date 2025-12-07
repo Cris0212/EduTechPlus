@@ -3,8 +3,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using EduTechPlus.Api.Models;
 
 namespace EduTechPlus
 {
@@ -19,7 +19,8 @@ namespace EduTechPlus
             // Configurar HttpClient
             cliente.BaseAddress = new Uri("http://localhost:5215/api/");
             cliente.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
+                new MediaTypeWithQualityHeaderValue("application/json")
+            );
         }
 
         private async void btnIniciar_Click(object sender, EventArgs e)
@@ -29,63 +30,46 @@ namespace EduTechPlus
 
             if (string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(contrasena))
             {
-                MessageBox.Show("Correo y contraseña son obligatorios.");
+                MessageBox.Show("Ingrese correo y contraseña.");
                 return;
             }
 
-            if (!EsCorreoValido(correo))
-            {
-                MessageBox.Show("Ingrese un correo válido.");
-                return;
-            }
-
-            var loginRequest = new
-            {
-                correo = correo,
-                contrasena = contrasena
-            };
+            var loginData = new { correo, contrasena };
 
             try
             {
-                string json = JsonSerializer.Serialize(loginRequest);
+                string json = JsonSerializer.Serialize(loginData);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 var response = await cliente.PostAsync("Auth/login", content);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    var usuario = JsonSerializer.Deserialize<LoginResponseDto>(responseBody);
+                    string resultJson = await response.Content.ReadAsStringAsync();
+                    var usuario = JsonSerializer.Deserialize<Usuario>(resultJson);
 
-                    MessageBox.Show($"Bienvenido {usuario.Nombre} ({usuario.Rol})");
+                    if (usuario != null)
+                    {
+                        MessageBox.Show($"Bienvenido {usuario.Nombre} ({usuario.Rol})");
+                        this.Hide();
+                        FrmMenu menu = new FrmMenu();
+                        menu.ShowDialog();
+                        this.Show();
+                    }
+                    else
+                    {
+                        MessageBox.Show("No se pudo obtener la información del usuario.");
+                    }
                 }
                 else
                 {
-                    MessageBox.Show($"Login fallido: {response.StatusCode}");
+                    MessageBox.Show("Correo o contraseña incorrectos.");
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al conectar con el servidor: " + ex.Message);
+                MessageBox.Show("Error al conectar con la API: " + ex.Message);
             }
-        }
-        private bool EsCorreoValido(string correo)
-        {
-            string patron = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-            return Regex.IsMatch(correo, patron);
-        }
-
-        private class LoginResponseDto
-        {
-            public int UsuarioId { get; set; }
-            public string Nombre { get; set; }
-            public string Correo { get; set; }
-            public string Rol { get; set; }
-            public int? ColegioId { get; set; }
-            public string ColegioNombre { get; set; }
-            public string Turno { get; set; }
-            public int? GrupoId { get; set; }
-            public string GrupoNombre { get; set; }
         }
     }
 }

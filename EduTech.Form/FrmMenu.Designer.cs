@@ -31,13 +31,14 @@
             m = new MenuStrip();
             LoginToolStripMenuItem = new ToolStripMenuItem();
             RegistroToolStripMenuItem = new ToolStripMenuItem();
+            FrmUsuarios = new ToolStripMenuItem();
             m.SuspendLayout();
             SuspendLayout();
             // 
             // m
             // 
             m.ImageScalingSize = new Size(20, 20);
-            m.Items.AddRange(new ToolStripItem[] { LoginToolStripMenuItem, RegistroToolStripMenuItem });
+            m.Items.AddRange(new ToolStripItem[] { LoginToolStripMenuItem, RegistroToolStripMenuItem, FrmUsuarios });
             m.Location = new Point(0, 0);
             m.Name = "m";
             m.Size = new Size(1036, 62);
@@ -61,11 +62,19 @@
             RegistroToolStripMenuItem.Text = "Registro";
             RegistroToolStripMenuItem.Click += FrmRegistro_Click;
             // 
+            // FrmUsuarios
+            // 
+            FrmUsuarios.Font = new Font("Segoe Print", 18F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            FrmUsuarios.Name = "FrmUsuarios";
+            FrmUsuarios.Size = new Size(163, 58);
+            FrmUsuarios.Text = "Usuarios";
+            FrmUsuarios.Click += FrmUsuarios_Click;
+            // 
             // FrmMenu
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1036, 719);
+            ClientSize = new Size(1036, 957);
             Controls.Add(m);
             IsMdiContainer = true;
             MainMenuStrip = m;
@@ -82,5 +91,6 @@
         private MenuStrip m;
         private ToolStripMenuItem LoginToolStripMenuItem;
         private ToolStripMenuItem RegistroToolStripMenuItem;
+        private ToolStripMenuItem FrmUsuarios;
     }
 }

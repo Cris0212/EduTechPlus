@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             lblTitulo = new Label();
-            lblUsuario = new Label();
+            lblCorreo = new Label();
             txtUsuario = new TextBox();
             txtContraseña = new TextBox();
             btnIniciar = new Button();
@@ -46,15 +46,15 @@
             lblTitulo.TabIndex = 0;
             lblTitulo.Text = "Login";
             // 
-            // lblUsuario
+            // lblCorreo
             // 
-            lblUsuario.AutoSize = true;
-            lblUsuario.Font = new Font("Segoe Print", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblUsuario.Location = new Point(245, 161);
-            lblUsuario.Name = "lblUsuario";
-            lblUsuario.Size = new Size(105, 40);
-            lblUsuario.TabIndex = 1;
-            lblUsuario.Text = "Usuario";
+            lblCorreo.AutoSize = true;
+            lblCorreo.Font = new Font("Segoe Print", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            lblCorreo.Location = new Point(245, 161);
+            lblCorreo.Name = "lblCorreo";
+            lblCorreo.Size = new Size(95, 40);
+            lblCorreo.TabIndex = 1;
+            lblCorreo.Text = "Correo";
             // 
             // txtUsuario
             // 
@@ -107,7 +107,7 @@
             Controls.Add(btnIniciar);
             Controls.Add(txtContraseña);
             Controls.Add(txtUsuario);
-            Controls.Add(lblUsuario);
+            Controls.Add(lblCorreo);
             Controls.Add(lblTitulo);
             Name = "FrmLogin";
             Text = "FrmLogin";
@@ -119,7 +119,7 @@
         #endregion
 
         private Label lblTitulo;
-        private Label lblUsuario;
+        private Label lblCorreo;
         private TextBox txtUsuario;
         private TextBox txtContraseña;
         private Button btnIniciar;

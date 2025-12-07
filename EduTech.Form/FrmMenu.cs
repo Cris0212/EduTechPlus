@@ -23,5 +23,14 @@ namespace EduTechPlus
             frmLogin.WindowState = FormWindowState.Maximized;
             frmLogin.Show();
         }
+
+        private void FrmUsuarios_Click(object sender, EventArgs e)
+        {
+            FrmUsuarios frmUsuarios = new FrmUsuarios();
+            frmUsuarios.MdiParent = this;
+            frmUsuarios.WindowState = FormWindowState.Maximized;
+            frmUsuarios.Show();
+
+        }
     }
 }
