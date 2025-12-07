@@ -17,7 +17,7 @@ namespace EduTechPlus
             InitializeComponent();
 
             // Configurar HttpClient
-            cliente.BaseAddress = new Uri("https://localhost:7060/api/");
+            cliente.BaseAddress = new Uri("http://localhost:5215/api/");
             cliente.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
         }

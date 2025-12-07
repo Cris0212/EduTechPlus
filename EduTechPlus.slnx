@@ -1,4 +1,6 @@
 <Solution>
-  <Project Path="EduTech.Form/EduTechPlus.csproj" />
+  <Project Path="EduTech.Form/EduTechPlus.csproj">
+    <BuildDependency Project="EduTechPlus/EduTechPlus.Api.csproj" />
+  </Project>
   <Project Path="EduTechPlus/EduTechPlus.Api.csproj" />
 </Solution>

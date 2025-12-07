@@ -19,10 +19,10 @@ namespace EduTechPlus
             cmbRol.Items.Clear();
             cmbRol.Items.Add("Alumno");
             cmbRol.Items.Add("Profesor");
-            cmbRol.SelectedIndex = 0; 
+            cmbRol.SelectedIndex = 0;
 
             // Configurar HttpClient
-            cliente.BaseAddress = new Uri("https://localhost:7060/api/");
+            cliente.BaseAddress = new Uri("http://localhost:5215/api/");
             cliente.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json")
             );
