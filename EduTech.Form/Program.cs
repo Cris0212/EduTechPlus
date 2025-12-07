@@ -1,17 +1,24 @@
-namespace EduTech.Form
+using System;
+using System.Windows.Forms;
+
+namespace EduTechPlus
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
-            ApplicationConfiguration.Initialize();
-            Application.Run(new Login());
+            Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            // Mostrar login primero
+            FrmLogin frmLogin = new FrmLogin();
+            if (frmLogin.ShowDialog() == DialogResult.OK)
+            {
+                // Si login OK, abrir menú principal
+                Application.Run(new FrmMenu());
+            }
         }
     }
 }
