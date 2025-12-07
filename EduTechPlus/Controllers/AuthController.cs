@@ -1,8 +1,7 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using EduTechPlus.Api.Data;
+﻿using EduTechPlus.Api.Data;
 using EduTechPlus.Api.Dtos;
 using EduTechPlus.Api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +12,15 @@ namespace EduTechPlus.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IPasswordHasher<Usuario> _passwordHasher;
 
-        public AuthController(AppDbContext context)
+        public AuthController(AppDbContext context, IPasswordHasher<Usuario> passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
+        // POST: api/auth/register-profesor
         [HttpPost("register-profesor")]
         public async Task<IActionResult> RegisterProfesor([FromBody] RegisterProfesorDto dto)
         {
@@ -29,9 +31,11 @@ namespace EduTechPlus.Api.Controllers
             {
                 Nombre = dto.Nombre,
                 Correo = dto.Correo,
-                ContrasenaHash = HashPassword(dto.Contrasena),
                 Rol = RolUsuario.Profesor
             };
+
+            // Hash de la contraseña
+            usuario.ContrasenaHash = _passwordHasher.HashPassword(usuario, dto.Contrasena);
 
             var detalle = new ProfesorDetalle
             {
@@ -43,32 +47,23 @@ namespace EduTechPlus.Api.Controllers
             _context.ProfesorDetalles.Add(detalle);
             await _context.SaveChangesAsync();
 
-            // asignar materias a grupos
-            var asignaciones = new List<ProfesorGrupoMateria>();
-            foreach (var grupoId in dto.GruposIds)
+            return Ok(new
             {
-                foreach (var materiaId in dto.MateriasIds)
-                {
-                    asignaciones.Add(new ProfesorGrupoMateria
-                    {
-                        ProfesorId = usuario.Id,
-                        GrupoId = grupoId,
-                        MateriaId = materiaId
-                    });
-                }
-            }
-            _context.ProfesorGrupoMaterias.AddRange(asignaciones);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { usuario.Id, usuario.Nombre, usuario.Correo, Rol = usuario.Rol.ToString() });
+                usuario.Id,
+                usuario.Nombre,
+                usuario.Correo,
+                Rol = usuario.Rol.ToString()
+            });
         }
 
+        // POST: api/auth/register-alumno
         [HttpPost("register-alumno")]
         public async Task<IActionResult> RegisterAlumno([FromBody] RegisterAlumnoDto dto)
         {
             if (await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo))
                 return BadRequest("El correo ya está registrado.");
 
+            // Buscar el grupo por nombre, turno y colegio
             var grupo = await _context.Grupos
                 .Include(g => g.Colegio)
                 .SingleOrDefaultAsync(g =>
@@ -83,9 +78,11 @@ namespace EduTechPlus.Api.Controllers
             {
                 Nombre = dto.Nombre,
                 Correo = dto.Correo,
-                ContrasenaHash = HashPassword(dto.Contrasena),
                 Rol = RolUsuario.Alumno
             };
+
+            // Hash de la contraseña
+            usuario.ContrasenaHash = _passwordHasher.HashPassword(usuario, dto.Contrasena);
 
             var detalle = new AlumnoDetalle
             {
@@ -113,8 +110,9 @@ namespace EduTechPlus.Api.Controllers
             });
         }
 
+        // POST: api/auth/login
         [HttpPost("login")]
-        public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto dto)
+        public async Task<ActionResult<LoginResponseDto>> Login([FromBody] LoginRequestDto dto)
         {
             var usuario = await _context.Usuarios
                 .Include(u => u.AlumnoDetalle)
@@ -125,7 +123,17 @@ namespace EduTechPlus.Api.Controllers
                     .ThenInclude(p => p.Colegio)
                 .SingleOrDefaultAsync(u => u.Correo == dto.Correo);
 
-            if (usuario == null || usuario.ContrasenaHash != HashPassword(dto.Contrasena))
+            if (usuario == null)
+                return Unauthorized("Correo o contraseña incorrectos.");
+
+            // 🔐 Verificación del hash
+            var result = _passwordHasher.VerifyHashedPassword(
+                usuario,
+                usuario.ContrasenaHash,
+                dto.Contrasena
+            );
+
+            if (result == PasswordVerificationResult.Failed)
                 return Unauthorized("Correo o contraseña incorrectos.");
 
             var response = new LoginResponseDto
@@ -152,14 +160,6 @@ namespace EduTechPlus.Api.Controllers
             }
 
             return Ok(response);
-        }
-
-        private string HashPassword(string password)
-        {
-            using var sha = SHA256.Create();
-            var bytes = Encoding.UTF8.GetBytes(password);
-            var hash = sha.ComputeHash(bytes);
-            return Convert.ToBase64String(hash);
         }
     }
 }
