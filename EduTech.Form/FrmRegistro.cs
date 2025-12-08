@@ -55,7 +55,7 @@ namespace EduTechPlus
                     contrasena = txtContrasenaRe.Text.Trim()
                 };
 
-                endpoint = "Auth/register-alumno";
+                endpoint = "Auth/registro";
             }
             else // Profesor sin materias
             {
@@ -66,7 +66,7 @@ namespace EduTechPlus
                     contrasena = txtContrasenaRe.Text.Trim()
                 };
 
-                endpoint = "Auth/register-profesor";
+                endpoint = "Auth/registro";
             }
 
             try

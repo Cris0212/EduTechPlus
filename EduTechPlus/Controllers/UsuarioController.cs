@@ -1,4 +1,6 @@
-﻿using EduTechPlus.Api.Data;
+﻿using System.Linq;
+using System.Threading.Tasks;
+using EduTechPlus.Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +28,7 @@ namespace EduTechPlus.Api.Controllers
                     u.Id,
                     u.Nombre,
                     u.Correo,
-                    u.Rol,      
+                    u.Rol
                 })
                 .ToListAsync();
 
@@ -37,23 +39,20 @@ namespace EduTechPlus.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetUsuario(int id)
         {
-            var u = await _context.Usuarios.FirstOrDefaultAsync(x => x.Id == id);
+            var u = await _context.Usuarios
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id);
 
             if (u == null)
                 return NotFound();
 
-            var resultado = new
+            return Ok(new
             {
                 u.Id,
                 u.Nombre,
                 u.Correo,
-                u.Rol,        // <<--- igual aquí
-                Colegio = u.Colegio ?? string.Empty,
-                Turno = u.Turno ?? string.Empty,
-                Grupo = u.Grupo ?? string.Empty
-            };
-
-            return Ok(resultado);
+                u.Rol
+            });
         }
     }
 }

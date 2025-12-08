@@ -1,6 +1,7 @@
-﻿using EduTechPlus.Api.Data;
+﻿using System.Threading.Tasks;
+using BCrypt.Net;
+using EduTechPlus.Api.Data;
 using EduTechPlus.Api.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,17 +12,13 @@ namespace EduTechPlus.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly IPasswordHasher<Usuario> _passwordHasher;
 
-        public AuthController(AppDbContext context, IPasswordHasher<Usuario> passwordHasher)
+        public AuthController(AppDbContext context)
         {
             _context = context;
-            _passwordHasher = passwordHasher;
         }
 
-        // ======================================================
-        //  REGISTRO
-        // ======================================================
+        // POST: api/Auth/registro
         [HttpPost("registro")]
         public async Task<IActionResult> Registro([FromBody] RegistroRequest dto)
         {
@@ -29,25 +26,26 @@ namespace EduTechPlus.Api.Controllers
                 return BadRequest(ModelState);
 
             // 1. Verificar si el correo ya existe
-            bool existe = await _context.Usuarios.AnyAsync(u => u.Correo == dto.Correo);
+            bool existe = await _context.Usuarios
+                .AnyAsync(u => u.Correo == dto.Correo);
+
             if (existe)
                 return BadRequest("El correo ya está registrado.");
 
+            // 2. Crear objeto usuario
             var usuario = new Usuario
             {
                 Nombre = dto.Nombre,
                 Correo = dto.Correo,
                 ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(dto.Contrasena),
-                             
-                Colegio = dto.Colegio,
-                Turno = dto.Turno,
-                Grupo = dto.Grupo,
-                MateriasTexto = dto.MateriasTexto
+                Rol = dto.Rol   // 1 = Alumno, 2 = Profesor
             };
 
+            // 3. Guardar en BD
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
+            // 4. Devolver datos sin contraseña
             return Ok(new
             {
                 usuario.Id,
@@ -57,9 +55,7 @@ namespace EduTechPlus.Api.Controllers
             });
         }
 
-        // ======================================================
-        //  LOGIN
-        // ======================================================
+        // POST: api/Auth/login
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest dto)
         {
@@ -84,27 +80,19 @@ namespace EduTechPlus.Api.Controllers
                 usuario.Rol
             });
         }
+    }
 
-        // ======================================================
-        //  CLASES USADAS PARA RECIBIR EL JSON
-        // ======================================================
+    public class RegistroRequest
+    {
+        public string Nombre { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
+        public int Rol { get; set; }  // 1 = Alumno, 2 = Profesor
+    }
 
-        public class RegistroRequest
-        {
-            public string Nombre { get; set; } = string.Empty;
-            public string Correo { get; set; } = string.Empty;
-            public string Contrasena { get; set; } = string.Empty;
-            public int Rol { get; set; }
-            public string Colegio { get; set; } = string.Empty;
-            public string Turno { get; set; } = string.Empty;
-            public string Grupo { get; set; } = string.Empty;
-            public string MateriasTexto { get; set; } = string.Empty;
-        }
-
-        public class LoginRequest
-        {
-            public string Correo { get; set; } = string.Empty;
-            public string Contrasena { get; set; } = string.Empty;
-        }
+    public class LoginRequest
+    {
+        public string Correo { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
     }
 }
