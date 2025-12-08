@@ -1,5 +1,7 @@
-using EduTechPlus.Api.Data;
+using EduTechPlus.Api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using EduTechPlus.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -5,8 +5,7 @@ namespace EduTechPlus.Api.Data
 {
     public class AppDbContext : DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options)
-            : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 
@@ -37,6 +36,7 @@ namespace EduTechPlus.Api.Data
                 .IsRequired()
                 .HasMaxLength(150);
 
+            // Usuario 1-1 AlumnoDetalle
             modelBuilder.Entity<Usuario>()
                 .Property(u => u.ContrasenaHash)
                 .IsRequired();

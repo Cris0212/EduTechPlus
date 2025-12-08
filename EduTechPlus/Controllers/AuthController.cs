@@ -1,5 +1,6 @@
 ﻿using EduTechPlus.Api.Data;
 using EduTechPlus.Api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,10 +11,12 @@ namespace EduTechPlus.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IPasswordHasher<Usuario> _passwordHasher;
 
-        public AuthController(AppDbContext context)
+        public AuthController(AppDbContext context, IPasswordHasher<Usuario> passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         // ======================================================
