@@ -1,11 +1,10 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows.Forms;
-using EduTechPlus.Api.Dtos;
-using EduTechPlus.Api.Models;
 
 namespace EduTechPlus
 {
@@ -17,19 +16,24 @@ namespace EduTechPlus
         {
             InitializeComponent();
 
-            cliente.BaseAddress = new Uri("http://localhost:5215/api/");
+            // Configurar HttpClient
+            cliente.BaseAddress = new Uri("https://localhost:7215/api/");
             cliente.DefaultRequestHeaders.Accept.Clear();
             cliente.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
 
+            // Configurar DataGridView
             dgvUsuarios.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvUsuarios.ReadOnly = true;
             dgvUsuarios.MultiSelect = false;
             dgvUsuarios.AutoGenerateColumns = false;
 
             ConfigurarColumnas();
+
+            // Asociar evento botón actualizar
             btnActualizar.Click += BtnActualizar_Click;
 
+            // Cargar usuarios al iniciar
             CargarUsuariosAsync();
         }
 
@@ -55,33 +59,17 @@ namespace EduTechPlus
 
             dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
             {
+                Name = "Correo",
+                HeaderText = "Correo",
+                DataPropertyName = "Correo",
+                ReadOnly = true
+            });
+
+            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
+            {
                 Name = "Rol",
                 HeaderText = "Rol",
-                DataPropertyName = "Rol", // Alumno / Profesor
-                ReadOnly = true
-            });
-
-            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                Name = "Colegio",
-                HeaderText = "Colegio",
-                DataPropertyName = "Colegio",
-                ReadOnly = true
-            });
-
-            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                Name = "Turno",
-                HeaderText = "Turno",
-                DataPropertyName = "Turno",
-                ReadOnly = true
-            });
-
-            dgvUsuarios.Columns.Add(new DataGridViewTextBoxColumn()
-            {
-                Name = "Grupo",
-                HeaderText = "Grupo",
-                DataPropertyName = "Grupo",
+                DataPropertyName = "Rol",
                 ReadOnly = true
             });
         }
@@ -99,33 +87,29 @@ namespace EduTechPlus
                 if (response.IsSuccessStatusCode)
                 {
                     string json = await response.Content.ReadAsStringAsync();
+
+                    // Deserializamos como dynamic
                     var usuariosApi = JsonConvert.DeserializeObject<List<dynamic>>(json);
 
-                    var lista = new List<UsuarioListadoDto>();
-
-                    foreach (var u in usuariosApi)
+                    // Creamos lista anónima para traducir el rol
+                    var lista = usuariosApi.Select(u => new
                     {
-                        lista.Add(new UsuarioListadoDto
-                        {
-                            Id = u.id,
-                            Nombre = u.nombre,
-                            Rol = (u.rol == 1) ? "Alumno" : "Profesor",
-                            Colegio = u.colegio ?? "",
-                            Turno = u.turno ?? "",
-                            Grupo = u.grupo ?? ""
-                        });
-                    }
+                        Id = u.id,
+                        Nombre = u.nombre,
+                        Correo = u.correo,
+                        Rol = (u.rol == 1) ? "Alumno" : "Profesor"
+                    }).ToList();
 
                     dgvUsuarios.DataSource = lista;
                 }
                 else
                 {
-                    MessageBox.Show("No se pudieron cargar los usuarios");
+                    MessageBox.Show("No se pudieron cargar los usuarios", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

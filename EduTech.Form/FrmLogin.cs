@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Drawing;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Windows.Forms;
-using EduTechPlus.Api.Models;
 
 namespace EduTechPlus
 {
@@ -16,41 +16,45 @@ namespace EduTechPlus
         {
             InitializeComponent();
 
-            // Configurar HttpClient
+            // Configurar HttpClient con la URL de tu API
             cliente.BaseAddress = new Uri("http://localhost:5215/api/");
             cliente.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json")
             );
         }
 
-        private async void btnIniciar_Click(object sender, EventArgs e)
+        private async void btnLogin_Click(object sender, EventArgs e)
         {
-            string correo = txtUsuario.Text.Trim();
-            string contrasena = txtContraseña.Text.Trim();
+            // Crear DTO local para enviar al login
+            var credenciales = new LoginRequest
+            {
+                Correo = txtCorreo.Text.Trim(),
+                Contrasena = txtContraseña.Text.Trim()
+            };
 
-            if (string.IsNullOrEmpty(correo) || string.IsNullOrEmpty(contrasena))
+            if (string.IsNullOrEmpty(credenciales.Correo) || string.IsNullOrEmpty(credenciales.Contrasena))
             {
                 MessageBox.Show("Ingrese correo y contraseña.");
                 return;
             }
 
-            var loginData = new { correo, contrasena };
-
             try
             {
-                string json = JsonSerializer.Serialize(loginData);
+                string json = JsonConvert.SerializeObject(credenciales);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+                // Llamada POST a la API
                 var response = await cliente.PostAsync("Auth/login", content);
+                string jsonResponse = await response.Content.ReadAsStringAsync();
 
                 if (response.IsSuccessStatusCode)
                 {
-                    string resultJson = await response.Content.ReadAsStringAsync();
-                    var usuario = JsonSerializer.Deserialize<Usuario>(resultJson);
+                    // DTO local para recibir respuesta de la API
+                    var usuario = JsonConvert.DeserializeObject<UsuarioResponse>(jsonResponse);
 
                     if (usuario != null)
                     {
-                        MessageBox.Show($"Bienvenido {usuario.Nombre} ({usuario.Rol})");
+                        MessageBox.Show($"Bienvenido {usuario.Nombre} (Rol: {usuario.Rol})", "Login exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         this.Hide();
                         FrmMenu menu = new FrmMenu();
                         menu.ShowDialog();
@@ -63,13 +67,30 @@ namespace EduTechPlus
                 }
                 else
                 {
-                    MessageBox.Show("Correo o contraseña incorrectos.");
+                    MessageBox.Show("Correo o contraseña incorrectos.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error al conectar con la API: " + ex.Message);
+                MessageBox.Show("Error al conectar con la API: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
+
+    // DTO local para enviar al logi
+    public class LoginRequest
+    {
+        public string Correo { get; set; } = string.Empty;
+        public string Contrasena { get; set; } = string.Empty;
+    }
+
+    // DTO local para recibir respuesta de la API
+    public class UsuarioResponse
+    {
+        public int Id { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string Correo { get; set; } = string.Empty;
+        public int Rol { get; set; }
+    }
 }
+

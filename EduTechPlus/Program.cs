@@ -18,7 +18,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Controladores
 builder.Services.AddControllers();
 
-// CORS (para que WinForms pueda llamar sin líos)
+// CORS (para que WinForms pueda llamar sin lï¿½os)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>

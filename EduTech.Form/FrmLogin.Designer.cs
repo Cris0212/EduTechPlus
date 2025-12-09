@@ -30,7 +30,7 @@
         {
             lblTitulo = new Label();
             lblCorreo = new Label();
-            txtUsuario = new TextBox();
+            txtCorreo = new TextBox();
             txtContraseña = new TextBox();
             btnIniciar = new Button();
             lblContraseña = new Label();
@@ -58,12 +58,12 @@
             // 
             // txtUsuario
             // 
-            txtUsuario.BackColor = Color.White;
-            txtUsuario.Font = new Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            txtUsuario.Location = new Point(245, 199);
-            txtUsuario.Name = "txtUsuario";
-            txtUsuario.Size = new Size(372, 38);
-            txtUsuario.TabIndex = 4;
+            txtCorreo.BackColor = Color.White;
+            txtCorreo.Font = new Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            txtCorreo.Location = new Point(245, 199);
+            txtCorreo.Name = "txtUsuario";
+            txtCorreo.Size = new Size(372, 38);
+            txtCorreo.TabIndex = 4;
             // 
             // txtContraseña
             // 
@@ -84,7 +84,7 @@
             btnIniciar.TabIndex = 7;
             btnIniciar.Text = "Iniciar";
             btnIniciar.UseVisualStyleBackColor = false;
-            btnIniciar.Click += btnIniciar_Click;
+            btnIniciar.Click += btnLogin_Click;
             // 
             // lblContraseña
             // 
@@ -106,7 +106,7 @@
             Controls.Add(lblContraseña);
             Controls.Add(btnIniciar);
             Controls.Add(txtContraseña);
-            Controls.Add(txtUsuario);
+            Controls.Add(txtCorreo);
             Controls.Add(lblCorreo);
             Controls.Add(lblTitulo);
             Name = "FrmLogin";
@@ -120,7 +120,7 @@
 
         private Label lblTitulo;
         private Label lblCorreo;
-        private TextBox txtUsuario;
+        private TextBox txtCorreo;
         private TextBox txtContraseña;
         private Button btnIniciar;
         private Label lblContraseña;

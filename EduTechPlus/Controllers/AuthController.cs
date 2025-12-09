@@ -25,14 +25,13 @@ namespace EduTechPlus.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // 1. Verificar si el correo ya existe
+
             bool existe = await _context.Usuarios
                 .AnyAsync(u => u.Correo == dto.Correo);
 
             if (existe)
                 return BadRequest("El correo ya está registrado.");
 
-            // 2. Crear objeto usuario
             var usuario = new Usuario
             {
                 Nombre = dto.Nombre,
@@ -41,11 +40,10 @@ namespace EduTechPlus.Api.Controllers
                 Rol = dto.Rol   // 1 = Alumno, 2 = Profesor
             };
 
-            // 3. Guardar en BD
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
-            // 4. Devolver datos sin contraseña
+            
             return Ok(new
             {
                 usuario.Id,

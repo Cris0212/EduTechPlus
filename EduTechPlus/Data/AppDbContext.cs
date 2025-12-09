@@ -11,8 +11,6 @@ namespace EduTechPlus.Api.Data
 
         // Tabla principal
         public DbSet<Usuario> Usuarios { get; set; }
-
-        // Si ya tienes modelos para esto, déjalos:
         public DbSet<Colegio> Colegios { get; set; }
         public DbSet<Grupo> Grupos { get; set; }
         public DbSet<Materia> Materias { get; set; }
@@ -36,7 +34,6 @@ namespace EduTechPlus.Api.Data
                 .IsRequired()
                 .HasMaxLength(150);
 
-            // Usuario 1-1 AlumnoDetalle
             modelBuilder.Entity<Usuario>()
                 .Property(u => u.ContrasenaHash)
                 .IsRequired();

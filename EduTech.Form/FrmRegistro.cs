@@ -26,8 +26,6 @@ namespace EduTechPlus
             cmbRol.Items.Add("Alumno");
             cmbRol.Items.Add("Profesor");
             cmbRol.SelectedIndex = 0;
-
-     
         }
 
         private async void btnRegistar_Click(object sender, EventArgs e)
@@ -41,43 +39,27 @@ namespace EduTechPlus
                 return;
             }
 
-            string rol = cmbRol.SelectedItem?.ToString() ?? "";
+            // Determinar el valor del rol según la selección
+            int rolValor = (cmbRol.SelectedItem?.ToString() == "Alumno") ? 1 : 2;
 
-            object registro;
-            string endpoint;
-
-            if (rol == "Alumno")
+            // Crear objeto para enviar al API
+            var registro = new
             {
-                registro = new
-                {
-                    nombre = txtNombre.Text.Trim(),
-                    correo = txtCorreo.Text.Trim(),
-                    contrasena = txtContrasenaRe.Text.Trim()
-                };
-
-                endpoint = "Auth/registro";
-            }
-            else // Profesor sin materias
-            {
-                registro = new
-                {
-                    nombre = txtNombre.Text.Trim(),
-                    correo = txtCorreo.Text.Trim(),
-                    contrasena = txtContrasenaRe.Text.Trim()
-                };
-
-                endpoint = "Auth/registro";
-            }
+                nombre = txtNombre.Text.Trim(),
+                correo = txtCorreo.Text.Trim(),
+                contrasena = txtContrasenaRe.Text.Trim(),
+                rol = rolValor
+            };
 
             try
             {
                 string json = JsonConvert.SerializeObject(registro);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
-                var response = await cliente.PostAsync(endpoint, content);
+                var response = await cliente.PostAsync("Auth/registro", content);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    MessageBox.Show($"{rol} registrado correctamente.",
+                    MessageBox.Show($"{cmbRol.SelectedItem} registrado correctamente.",
                         "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     LimpiarCampos();
@@ -86,7 +68,7 @@ namespace EduTechPlus
                 {
                     string errorBody = await response.Content.ReadAsStringAsync();
                     MessageBox.Show(
-                        $"Error al registrar {rol}.\nCódigo: {response.StatusCode}\nAPI: {errorBody}",
+                        $"Error al registrar {cmbRol.SelectedItem}.\nCódigo: {response.StatusCode}\nAPI: {errorBody}",
                         "Error", MessageBoxButtons.OK, MessageBoxIcon.Error
                     );
                 }
